@@ -1,0 +1,16 @@
+/dts-v1/;
+
+/ {
+	model = "Xilinx Zynq ZC702";
+	compatible = "xlnx,zynq-zc702";
+	#address-cells = <0x1>;
+	#size-cells = <0x1>;
+	interrupt-parent = <0x1>;
+
+	chosen {
+		bootargs = "console=ttyPS0,115200 root=/dev/ram rw ip=:::::eth0:dhcp earlyprintk"; 
+		linux,stdout-path = "/amba@0/uart@E0001000";
+	};
+
+/include/ "zynq.dtsi"
+};
