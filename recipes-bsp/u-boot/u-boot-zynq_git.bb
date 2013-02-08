@@ -9,14 +9,20 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=1707d6db1d42237583f50183a5651ecb"
 
 # We use the revision in order to avoid having to fetch it from the
 # repo during parse
-SRCREV = "7639205355d437d0650953021b99c0e515355c62"
+SRCREV = "26786228acfdc0a02190a8d9ca9fcca51a5dcf28"
 
 PV = "xilinx-zc702"
 PR = "r1"
 
-SRC_URI = "git://git.xilinx.com/u-boot-xarm.git;protocol=git \
-           file://0001-Change-boot-options-so-linux-can-boot-without-a-ramd.patch"
+SRC_URI = "git://git.xilinx.com/u-boot-xlnx.git;protocol=git \
+           file://0001-Change-boot-options-so-linux-can-boot-without-a-ramd.patch \
+"
+
 
 S = "${WORKDIR}/git"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+do_deploy_append() {
+	install ${S}/u-boot ${DEPLOYDIR}/u-boot-${MACHINE}.elf
+}
