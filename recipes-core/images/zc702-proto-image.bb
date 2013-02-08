@@ -2,11 +2,9 @@ DESCRIPTION = "A console-only image with more full-featured Linux system \
 functionality installed."
 
 IMAGE_FEATURES += "splash ssh-server-openssh tools-sdk \
-                   tools-debug debug-tweaks"
+                   tools-debug debug-tweaks package-management"
 
-IMAGE_INSTALL = "\
-    packagegroup-core-boot \
-    packagegroup-core-basic \
+CORE_IMAGE_EXTRA_INSTALL = "\
     kernel-modules \
     "
 
