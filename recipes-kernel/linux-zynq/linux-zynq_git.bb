@@ -33,7 +33,6 @@ require recipes-kernel/linux/linux-yocto.inc
 FILESEXTRAPATHS_prepend := "${THISDIR}/linux-zynq-git:"
 
 SRC_URI = "git://git.xilinx.com/linux-xlnx.git;protocol=git;nocheckout=1 \
-           file://0001-Revert-Zynq-boot-Makefile-update-with-zynq-dev.patch \
            file://zynq.dtsi \
            file://defconfig \
           "
@@ -45,14 +44,16 @@ KERNEL_IMAGETYPE = "uImage"
 KERNEL_DEVICETREE_zynq-zc702 = "${WORKDIR}/zc702-ram.dts \
                                 ${WORKDIR}/zc702-sd.dts"
 
-LINUX_VERSION ?= "3.6"
+LINUX_VERSION ?= "3.8"
 LINUX_VERSION_EXTENSION ?= "-xilinx"
 
 # tag: v3.4 76e10d158efb6d4516018846f60c2ab5501900bc
-SRCREV="04d9378881401e71f83b8b4fea0abd71d33b4052"
+SRCREV="6a0bedad60e2bca8d9b50bf81b9895e29e31a6d7"
 
 PE = "0"
 PR = "${INC_PR}.0"
 PV = "${LINUX_VERSION}+git${SRCPV}"
+
+KERNEL_EXTRA_ARGS = "UIMAGE_LOADADDR=0x8000"
 
 COMPATIBLE_MACHINE = "zynq-zc702"

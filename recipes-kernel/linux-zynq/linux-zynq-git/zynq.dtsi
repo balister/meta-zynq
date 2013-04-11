@@ -1,11 +1,8 @@
-	memory {
-		device_type = "memory";
-		reg = <0x00000000 0x40000000>; 
-	};
 
-	soc {
-		compatible = "xlnx,zynq";
-		clock-frequency = <33333333>;
+	pmu {
+		compatible = "arm,cortex-a9-pmu";
+		interrupts = <0 5 4>, <0 6 4>;
+		interrupt-parent = <&gic>;
 	};
 
 	amba@0 {
@@ -18,8 +15,8 @@
 			interrupt-controller;
 			compatible = "arm,cortex-a9-gic";
 			#interrupt-cells = <3>;
-			reg = < 0xf8f01000 0x1000 >,
-			      < 0xf8f00100 0x0100 >;
+			reg = <0xf8f01000 0x1000>,
+			      <0xf8f00100 0x0100>;
 		};
 
 		pl310@f8f02000 {
@@ -29,25 +26,71 @@
 			reg = <0xf8f02000 0x1000>;
 			arm,data-latency = <3 2 2>;
 			arm,tag-latency = <2 2 2>;
-			interrupts = <0 34 4>;
+		};
+
+		ps7_ddrc_0: ps7-ddrc@f8006000 {
+			compatible = "xlnx,ps7-ddrc-1.00.a", "xlnx,ps7-ddrc";
+			reg = <0xf8006000 0x1000>;
+			xlnx,has-ecc = <0x0>;
+		} ;
+
+		ps7_ocm_0: ps7-ocm@0xfffc0000 {
+			compatible = "xlnx,ps7-ocm";
+			reg = <0xfffc0000 0x40000>; /* 256k */
 		};
 
 		uart@e0001000 {
 			compatible = "xlnx,ps7-uart-1.00.a";
 			reg = <0xe0001000 0x1000>;
-			interrupts = < 0 50 4 >;
+			interrupts = <0 50 4>;
 			interrupt-parent = <&gic>;
 			clock = <50000000>;
+		};
+
+		slcr: slcr@f8000000 {
+			compatible = "xlnx,zynq-slcr";
+			reg = <0xF8000000 0x1000>;
+			clocks {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				armpll: armpll {
+					#clock-cells = <0>;
+					clock-output-names = "armpll";
+					clocks = <&ps_clk>;
+					compatible = "xlnx,zynq-pll";
+					lockbit = <0>;
+					reg = < 0x100 0x110 0x10c >;
+				} ;
+				ddrpll: ddrpll {
+					#clock-cells = <0>;
+					clock-output-names = "ddrpll";
+					clocks = <&ps_clk>;
+					compatible = "xlnx,zynq-pll";
+					lockbit = <1>;
+					reg = < 0x104 0x114 0x10c >;
+				} ;
+				iopll: iopll {
+					#clock-cells = <0>;
+					clock-output-names = "iopll";
+					clocks = <&ps_clk>;
+					compatible = "xlnx,zynq-pll";
+					lockbit = <2>;
+					reg = < 0x108 0x118 0x10c >;
+				} ;
+				ps_clk: ps_clk {
+					#clock-cells = <0>;
+					clock-frequency = <33333333>;
+					clock-output-names = "ps_clk";
+					compatible = "fixed-clock";
+				} ;
+			} ;
 		};
 
 		timer@0xf8001000 {
 			compatible = "xlnx,ps7-ttc-1.00.a";
 			reg = <0xf8001000 0x1000>;
-			interrupts = <0 10 4>,<0 11 4>,<0 12 4>; 
+			interrupts = <0 10 4>,<0 11 4>,<0 12 4>;
 			interrupt-parent = <&gic>;
-			clock-frequency-timer0 = <111111111>;
-			clock-frequency-timer1 = <111111111>;
-			clock-frequency-timer2 = <111111111>;
 		};
 
 		timer@f8f00600 {
@@ -61,7 +104,6 @@
 			device_type = "watchdog";
 			compatible = "xlnx,ps7-wdt-1.00.a";
 			reg = <0xf8005000 0x100>;
-			clock-frequency = <111111111>;
 			interrupts = <0 9 4>;
 			interrupt-parent = <&gic>;
 			reset = <0>;
@@ -82,6 +124,7 @@
 			interrupts = <0 22 4>;
 			interrupt-parent = <&gic>;
 			phy-handle = <&phy0>;
+			phy-mode = "rgmii-id";
 			xlnx,ptp-enet-clock = <111111111>;
 			xlnx,slcr-div0-1000Mbps = <8>;
 			xlnx,slcr-div0-100Mbps = <8>;
@@ -91,11 +134,14 @@
 			xlnx,slcr-div1-10Mbps = <50>;
 			#address-cells = <0x1>;
 			#size-cells = <0x0>;
-
-			phy0: phy@7 {
-				compatible = "marvell,88e1116r";
-				device_type = "ethernet-phy";
-				reg = <0x7>;
+			mdio {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				phy0: phy@7 {
+					compatible = "marvell,88e1116r";
+					device_type = "ethernet-phy";
+					reg = <7>;
+				};
 			};
 		};
 
@@ -107,9 +153,77 @@
 			bus-id = <0>;
 			input-clk = <111111111>;
 			i2c-clk = <100000>;
-			
+
 			#address-cells = <1>;
 			#size-cells = <0>;
+			i2cswitch@74 {
+				compatible = "nxp,pca9548";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0x74>;
+
+				i2c@0 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <0>;
+					osc@5d {
+						compatible = "si570";
+						reg = <0x5d>;
+						factory-fout = <156250000>;
+						initial-fout = <148500000>;
+					};
+				};
+
+				i2c@2 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <2>;
+					eeprom@54 {
+						compatible = "at,24c08";
+						reg = <0x54>;
+					};
+				};
+
+				i2c@3 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <3>;
+					gpio@21 {
+						compatible = "ti,tca6416";
+						reg = <0x21>;
+						gpio-controller;
+						#gpio-cells = <2>;
+					};
+				};
+
+				i2c@4 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <4>;
+					rtc@54 {
+						compatible = "nxp,pcf8563";
+						reg = <0x51>;
+					};
+				};
+
+				i2c@7 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <7>;
+					hwmon@52 {
+						compatible = "pmbus,ucd9248";
+						reg = <52>;
+					};
+					hwmon@53 {
+						compatible = "pmbus,ucd9248";
+						reg = <53>;
+					};
+					hwmon@54 {
+						compatible = "pmbus,ucd9248";
+						reg = <54>;
+					};
+				};
+			};
 		};
 
 		sdhci@e0100000 {
@@ -149,38 +263,30 @@
 			#size-cells = <0>;
 			is-dual = <0>;
 			flash@0 {
-			compatible = "n25q128";
-			reg = <0x0>;
-			spi-max-frequency = <50000000>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-			partition@qspi-fsbl {
-				label = "qspi-fsbl";
-				reg = <0x0 0x80000>;
+				compatible = "n25q128";
+				reg = <0x0>;
+				spi-max-frequency = <50000000>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				partition@qspi-fsbl-uboot {
+					label = "qspi-fsbl-uboot";
+					reg = <0x0 0x100000>;
 				};
-			partition@qspi-u-boot {
-				label = "qspi-u-boot";
-				reg = <0x80000 0x80000>;
+				partition@qspi-linux {
+					label = "qspi-linux";
+					reg = <0x100000 0x500000>;
 				};
-			partition@qspi-linux {
-				label = "qspi-linux";
-				reg = <0x100000 0x500000>;
+				partition@qspi-device-tree {
+					label = "qspi-device-tree";
+					reg = <0x600000 0x20000>;
 				};
-			partition@qspi-device-tree {
-				label = "qspi-device-tree";
-				reg = <0x600000 0x20000>;
+				partition@qspi-rootfs {
+					label = "qspi-rootfs";
+					reg = <0x620000 0x5E0000>;
 				};
-			partition@qspi-user {
-				label = "qspi-user";
-				reg = <0x620000 0xE0000>;
-				};
-			partition@qspi-scratch {
-				label = "qspi-scratch";
-				reg = <0x700000 0x100000>;
-				};
-			partition@qspi-rootfs {
-				label = "qspi-rootfs";
-				reg = <0x800000 0x800000>;
+				partition@qspi-bitstream {
+					label = "qspi-bitstream";
+					reg = <0xC00000 0x400000>;
 				};
 			};
 		};
@@ -191,10 +297,21 @@
 			interrupts = <0 8 4>;
 			interrupt-parent = <&gic>;
 		};
+
 		xadc@f8007100 {
 			compatible = "xlnx,ps7-xadc-1.00.a";
 			reg = <0xf8007100 0x20>;
 			interrupts = <0 7 4>;
 			interrupt-parent = <&gic>;
 		};
+		ps7_dma_s: ps7-dma@f8003000 {
+			#dma-cells = <1>;
+			#dma-channels = <8>;
+			#dma-requests = <4>;
+			arm,primecell-periphid = <0x41330>;
+			compatible = "xlnx,ps7-dma-1.00.a", "arm,primecell", "arm,pl330";
+			interrupt-parent = <&gic>;
+			interrupts = < 0 13 4 0 14 4 0 15 4 0 16 4 0 17 4 0 40 4 0 41 4 0 42 4 0 43 4 >;
+			reg = < 0xf8003000 0x1000 >;
+		} ;
 	};
